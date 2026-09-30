@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de nomes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14395B;--green:#2E8B57;--ink:#182433;--muted:#5B6878;--bg:#F3F6F9;--line:#CBD5E0;--err:#B3261E}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+a,button,input{font:inherit}
+:focus-visible{outline:3px solid #F2B84B;outline-offset:2px}
+header{background:var(--navy);color:#fff}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0}
+.marca{font-weight:800;font-size:1.1rem}
+.voltar{color:#fff;text-decoration:none;border:2px solid #fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.95rem}
+.voltar:hover{background:#fff;color:var(--navy)}
+h1{margin:0;padding:20px 0 28px;font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800}
+main{padding:28px 0 56px}
+.busca{display:flex;gap:10px;margin-bottom:8px}
+.busca input{flex:1;min-width:0;padding:12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.busca input:focus{border-color:var(--navy)}
+.busca button{padding:12px 20px;border:0;border-radius:8px;background:var(--green);color:#fff;font-weight:800;cursor:pointer}
+.busca button:hover{background:#25764A}
+label{display:block;font-weight:700;margin-bottom:6px}
+#msg{min-height:1.4em;margin:10px 0 16px;color:var(--muted)}
+#msg.erro{color:var(--err);font-weight:500}
+.cartao{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;background:#fff;border:1px solid var(--line);border-left:6px solid var(--navy);border-radius:10px;padding:18px 20px}
+.cartao:empty{display:none}
+.nome{font-weight:800;font-size:1.2rem}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{padding:4px 12px;border-radius:99px;font-weight:700;font-size:.9rem}
+.sim{background:#DDF1E5;color:#17603A}
+.nao{background:#FBE3DF;color:#8C1D14}
+.ganhou{background:#FFF0C7;color:#7A5300}
+.neutro{background:#E8ECF1;color:#3B4757}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="bar">
+      <span class="marca">Casa e Lote</span>
+      <a class="voltar" href="index.html">Voltar ao cadastro</a>
+    </div>
+    <h1>Lista de nomes</h1>
+  </div>
+</header>
+
+<main class="wrap">
+  <label for="cpf">Buscar por CPF</label>
+  <form class="busca" id="f">
+    <input id="cpf" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off">
+    <button type="submit">Buscar</button>
+  </form>
+  <p id="msg" role="status" aria-live="polite"></p>
+  <div class="cartao" id="resultado"></div>
+</main>
+
+<script>
+// ===== CONFIGURE AQUI =====
+const API_URL = "http://localhost:8000";   // endereço da sua API (FastAPI)
+const ROTA_LISTA = "/pessoas";             // rota GET; aceita ?cpf=00000000000
+// GET /pessoas?cpf=00000000000  ->  { "nome": "Maria da Silva", "pago": true, "ganhou": false }
+// (se a API devolver uma lista, usamos o primeiro item). CPF não encontrado: responda 404 ou lista vazia.
+// A API deve devolver só nome, pago e ganhou (nunca o CPF).
+// ==========================
+
+const $ = s => document.querySelector(s);
+const soNumeros = v => v.replace(/\D/g, "");
+
+$("#cpf").addEventListener("input", e => {
+  e.target.value = soNumeros(e.target.value).slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+});
+
+function aviso(t, erro) {
+  const m = $("#msg");
+  m.textContent = t;
+  m.className = erro ? "erro" : "";
+}
+
+function tag(texto, classe) {
+  const t = document.createElement("span");
+  t.className = "tag " + classe;
+  t.textContent = texto;
+  return t;
+}
+
+async function consultar(cpf) {
+  const box = $("#resultado");
+  box.innerHTML = "";
+  aviso("Consultando…", false);
+  const naoAchou = "Nenhum cadastro encontrado para esse CPF. Confira os números e tente de novo.";
+  try {
+    const r = await fetch(API_URL + ROTA_LISTA + "?cpf=" + cpf);
+    if (r.status === 404) return aviso(naoAchou, true);
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    const p = Array.isArray(j) ? j[0] : j;
+    if (!p || !p.nome) return aviso(naoAchou, true);
+    const nome = document.createElement("span");
+    nome.className = "nome";
+    nome.textContent = p.nome;
+    const tags = document.createElement("div");
+    tags.className = "tags";
+    tags.append(
+      tag(p.pago ? "Pago" : "Não pago", p.pago ? "sim" : "nao"),
+      tag(p.ganhou ? "Ganhou" : "Não ganhou", p.ganhou ? "ganhou" : "neutro")
+    );
+    box.append(nome, tags);
+    aviso("", false);
+  } catch (err) {
+    aviso("Não foi possível consultar agora. Verifique se a API está no ar e se o endereço em API_URL está certo.", true);
+  }
+}
+
+$("#f").addEventListener("submit", e => {
+  e.preventDefault();
+  const cpf = soNumeros($("#cpf").value);
+  if (cpf.length !== 11) return aviso("Digite os 11 números do CPF para consultar.", true);
+  consultar(cpf);
+});
+</script>
+</body>
+</html>

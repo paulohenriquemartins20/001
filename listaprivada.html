@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de nomes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14395B;--green:#2E8B57;--ink:#182433;--muted:#5B6878;--bg:#F3F6F9;--line:#CBD5E0;--err:#B3261E}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+a,button,input{font:inherit}
+:focus-visible{outline:3px solid #F2B84B;outline-offset:2px}
+header{background:var(--navy);color:#fff}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0}
+.marca{font-weight:800;font-size:1.1rem}
+.voltar{color:#fff;text-decoration:none;border:2px solid #fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.95rem}
+.voltar:hover{background:#fff;color:var(--navy)}
+h1{margin:0;padding:20px 0 28px;font-size:clamp(1.7rem,4vw,2.4rem);font-weight:800}
+main{padding:28px 0 56px}
+.busca{display:flex;gap:10px;margin-bottom:8px}
+.busca input{flex:1;min-width:0;padding:12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.busca input:focus{border-color:var(--navy)}
+.busca button{padding:12px 20px;border:0;border-radius:8px;background:var(--green);color:#fff;font-weight:800;cursor:pointer}
+.busca button:hover{background:#25764A}
+label{display:block;font-weight:700;margin-bottom:6px}
+#msg{min-height:1.4em;margin:10px 0 16px;color:var(--muted)}
+#msg.erro{color:var(--err);font-weight:500}
+.cartao{display:flex;flex-wrap:wrap;align-items:center;gap:14px 16px;background:#fff;border:1px solid var(--line);border-top:6px solid var(--cor,var(--navy));border-radius:14px;padding:20px 22px;box-shadow:0 8px 24px rgba(20,57,91,.08)}
+.cartao:empty{display:none}
+.cartao.pago{--cor:var(--green)}
+.cartao.pendente{--cor:var(--err)}
+.cartao.sem{--cor:var(--muted)}
+.cartao.espera{--cor:var(--line);background:transparent;box-shadow:none}
+.avatar{flex:none;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;font-size:1.1rem}
+.espera .avatar{background:#E8ECF1;color:var(--muted)}
+.info{flex:1;min-width:170px}
+.nome{display:block;font-weight:800;font-size:1.25rem;line-height:1.25;overflow-wrap:anywhere}
+.espera .nome,.sem-nome{color:var(--muted)}
+.cpf-mask{display:block;margin-top:2px;color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-weight:700;font-size:.9rem}
+.tag svg{flex:none;width:16px;height:16px}
+.sim{background:#DDF1E5;color:#17603A}
+.nao{background:#FBE3DF;color:#8C1D14}
+.ganhou{background:#FFF0C7;color:#7A5300}
+.neutro{background:#E8ECF1;color:#3B4757}
+.busca button{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.busca button:disabled{opacity:.85;cursor:progress}
+.gira{width:16px;height:16px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:gira .7s linear infinite}
+.cartao .sk{background:linear-gradient(90deg,#E8ECF1 25%,#F6F8FB 50%,#E8ECF1 75%);background-size:200% 100%;animation:brilho 1.3s linear infinite;border-radius:8px;color:transparent}
+.sk-a{width:55%;height:1.25rem}
+.sk-b{width:35%;height:.9rem;margin-top:8px}
+.novo{animation:entra .35s ease-out}
+@keyframes gira{to{transform:rotate(360deg)}}
+@keyframes brilho{to{background-position:-200% 0}}
+@keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.novo,.cartao .sk{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="bar">
+      <span class="marca">Casa e Lote</span>
+      <a class="voltar" href="https://casalote.site/">Fazer cadastro</a>
+    </div>
+    <h1>Lista de nomes</h1>
+  </div>
+</header>
+
+<main class="wrap">
+  <label for="cpf">Buscar por CPF</label>
+  <form class="busca" id="f">
+    <input id="cpf" class="cpf" inputmode="numeric" placeholder="CPF" autocomplete="off">
+    <button type="submit" class="ps">Buscar</button>
+  </form>
+  <p id="msg" role="status" aria-live="polite"></p>
+  <div class="cartao espera" id="resultado"><span class="avatar">?</span><div class="info"><span class="nome">Nenhuma consulta ainda</span><span class="cpf-mask">Digite um CPF acima e clique em Buscar</span></div></div>
+  <div class="top"></div>
+</main>
+
+<script>
+ const tok = localStorage.getItem("token_usuario")
+ if(tok){
+     console.log("top")
+ }else{
+  window.location.href="https://casalote.site/login"
+ }
+ //outra coisa aqui ja 
+ function esc(t){
+  const d = document.createElement("div")
+  d.textContent = t
+  return d.innerHTML
+ }
+
+ const ESPERA = document.querySelector(".cartao").innerHTML
+ const ICONE_OK = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>'
+ const ICONE_X = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>'
+ const ICONE_ESTRELA = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 1.8l2.5 5.3 5.8.7-4.3 4 1.1 5.7L10 14.6 4.9 17.5 6 11.8 1.7 7.8l5.8-.7z"/></svg>'
+
+ function vazio(){
+  const c = document.querySelector(".cartao")
+  c.className = "cartao espera"
+  c.innerHTML = ESPERA
+ }
+
+ function carregando(sim){
+  const btn = document.querySelector(".ps")
+  btn.disabled = sim
+  btn.innerHTML = sim ? '<span class="gira"></span>Buscando' : "Buscar"
+  if(sim){
+   const msg = document.querySelector("#msg")
+   msg.textContent = ""
+   msg.classList.remove("erro")
+   const c = document.querySelector(".cartao")
+   c.className = "cartao espera"
+   c.innerHTML = '<span class="avatar sk"></span><div class="info"><span class="nome sk sk-a"></span><span class="cpf-mask sk sk-b"></span></div>'
+  }
+ }
+
+ function mostrarErro(texto){
+  carregando(false)
+  vazio()
+  const msg = document.querySelector("#msg")
+  msg.textContent = texto
+  msg.classList.add("erro")
+ }
+
+ function iniciais(nome){
+  const partes = String(nome).trim().split(/\s+/).filter(Boolean)
+  if(!partes.length) return "?"
+  const b = partes.length > 1 ? partes[partes.length-1][0] : ""
+  return (partes[0][0] + b).toUpperCase()
+ }
+
+ function cpfOculto(){
+  const d = document.querySelector(".cpf").value.replace(/\D/g,"")
+  return d.length === 11 ? "CPF ***." + d.slice(3,6) + "." + d.slice(6,9) + "-**" : ""
+ }
+
+ // procura um campo pelo nome (sem ligar pra maiúscula/minúscula), inclusive dentro de objetos aninhados
+ function pegar(obj, chaves){
+  if(!obj || typeof obj !== "object") return undefined
+  const mapa = {}
+  for(const k of Object.keys(obj)) mapa[k.toLowerCase()] = obj[k]
+  for(const c of chaves){
+   const v = mapa[c]
+   if(v !== null && v !== undefined && typeof v !== "object") return v
+  }
+  for(const k of Object.keys(obj)){
+   const v = obj[k]
+   if(v && typeof v === "object"){
+    const r = pegar(Array.isArray(v) ? v[0] : v, chaves)
+    if(r !== undefined) return r
+   }
+  }
+  return undefined
+ }
+
+ function mostrar(dados){
+  console.log("resposta da API:", dados)
+  const p = Array.isArray(dados) ? dados[0] : dados
+  if(!p || typeof p !== "object"){
+   mostrarErro("Nenhum cadastro encontrado para esse CPF.")
+   return
+  }
+  carregando(false)
+
+  // status: "pago" = verde; pendente (ou sem status) = vermelho
+  let st = pegar(p, ["status","situacao","situação","status_pagamento","pagamento","pago"])
+  if(typeof st === "boolean") st = st ? "pago" : "pendente"
+  const texto = st === undefined ? "" : String(st).trim().toLowerCase()
+  const pendente = texto === "" || /^(pend|nao|não)/.test(texto)
+
+  const classe = pendente ? "pendente" : "pago"
+  let tags = pendente
+   ? '<span class="tag nao">' + ICONE_X + 'Pendente</span>'
+   : '<span class="tag sim">' + ICONE_OK + 'Pago</span>'
+
+  // ganhou: só aparece se a API mandar esse campo
+  const g = pegar(p, ["ganhou"])
+  if(g !== undefined){
+   const ganhou = g === true || ["sim","true","ganhou"].includes(String(g).trim().toLowerCase())
+   tags += ganhou
+    ? '<span class="tag ganhou">' + ICONE_ESTRELA + 'Ganhou</span>'
+    : '<span class="tag neutro">Não ganhou</span>'
+  }
+
+  const nome = pegar(p, ["nome","nome_completo","nomecompleto","name","full_name","nome_usuario","usuario"])
+  const c = document.querySelector(".cartao")
+  c.className = "cartao novo " + classe
+  c.innerHTML =
+   '<span class="avatar">' + esc(iniciais(nome ?? "")) + '</span>' +
+   '<div class="info"><span class="nome">' + (nome ? esc(nome) : '<span class="sem-nome">Nome não informado</span>') + '</span><span class="cpf-mask">' + cpfOculto() + '</span></div>' +
+   '<div class="tags">' + tags + '</div>'
+ }
+
+ document.querySelector(".ps").addEventListener("click",async function(event){
+  event.preventDefault()
+  const idcpf = document.querySelector(".cpf").value
+  if(!idcpf.trim()){
+   mostrarErro("Digite o CPF para buscar.")
+   return
+  }
+
+  const API_URL = "https://paulo7518-comecio001.hf.space/cpf_usuario";  
+  
+  const dados = {
+     "cpf":idcpf
+  }
+
+  carregando(true)
+  let resposta, recebido
+  try{
+  resposta = await fetch(API_URL,{
+   method:"POST",
+   headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+tok
+   },
+   body:JSON.stringify(dados)
+
+ });
+ recebido = await resposta.json()
+  }catch(e){
+   mostrarErro("Não consegui falar com o servidor. Tente de novo.")
+   return
+  }
+ if(!resposta.ok){
+  mostrarErro(typeof recebido.detail === "string" ? recebido.detail : "Não foi possível consultar esse CPF.")
+  return
+ }
+ mostrar(recebido)
+  
+ 
+
+  
+
+ });
+          
+
+</script>
+</body>
+</html>
